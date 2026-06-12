@@ -1,0 +1,6 @@
+.DS_Store
+
+# KiCad temporary files
+*-backups/
+*_autosave-*
+*.lck
