@@ -836,11 +836,11 @@
 		(at 130.81 68.58)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "138aa427-2b8f-4ef6-92ab-9a63b28bb624")
+		(uuid "8777209b-9b4e-4fad-9306-7377252999af")
 	)
 	(wire
 		(pts
-			(xy 139.7 68.58) (xy 130.81 68.58)
+			(xy 137.16 68.58) (xy 130.81 68.58)
 		)
 		(stroke
 			(width 0)
@@ -909,7 +909,7 @@
 		(uuid "8270ae3d-be39-4807-829f-efc9ea061158")
 	)
 	(label "Output"
-		(at 139.7 68.58 0)
+		(at 137.16 68.58 0)
 		(effects
 			(font
 				(size 1.27 1.27)

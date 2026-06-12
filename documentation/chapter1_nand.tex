@@ -1,0 +1,170 @@
+\documentclass[11pt,letterpaper]{article}
+
+% --- Core Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{booktabs} 
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx} 
+\usepackage{hyperref}
+\usepackage{microtype}
+
+% --- Hyperref Setup ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={4-Bit Discrete Transistor Computer - Chapter 1},
+    pdfauthor={J. Estuardo González Sarceño},
+    pdfpagemode=FullScreen,
+}
+
+% --- Metadata ---
+\title{\textbf{4-Bit Discrete Transistor Computer From Scratch \\ \large Chapter 1: Discrete Resistor-Transistor Logic (RTL) NAND Gate}}
+\author{\textbf{J. Estuardo González Sarceño} \\ \normalsize Computer Engineering Documentation Framework}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document details the engineering specifications, mathematical bounds, and transient SPICE verification of the universal 2-Input NAND gate synthesized using discrete Resistor-Transistor Logic (RTL). The complete source code, and KiCad project structures are hosted natively on GitHub at: \url{https://github.com/esgosar/4-bit-computer-from-scratch-with-transistors}
+\end{abstract}
+
+\section{Introduction \& Project Scope}
+This document outlines the design, electrical specifications, and transient verification of the core logical primitive of our 4-bit computer: a universal \textbf{2-Input NAND Gate} synthesized via discrete \textbf{Resistor-Transistor Logic (RTL)}. This hardware project aims to design and construct a modular 4-bit CPU from discrete semiconductor primitives. Since the NAND gate is a functionally complete logical operator, all concurrent combinational and sequential sub-blocks—including the Arithmetic Logic Unit (ALU), state registers, and instruction control matrices—will be programmatically derived from the totem-pole configuration verified in this initial module. The entire framework has been routed, simulated, and netlist-verified inside the KiCad environment utilizing native \texttt{ngspice} engines on a macOS architecture.
+
+\section{Hardware Architecture \& Specifications}
+The architecture implements a classic collector-resistor RTL topology leveraging two NPN bipolar junction transistors (BJTs) arranged in a vertical totem-pole series connection.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\linewidth]{Schematic.png}
+    \caption{Circuit Schematic}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Logic High ($V_{OH}$):} Nominal $\approx 5\text{V}$. The signal line is clamped to $V_{CC}$ via the pull-up resistor when the underlying transistor stack remains non-conducting.
+    \item \textbf{Logic Low ($V_{OL}$):} Nominal $\approx 0.2\text{V}$. This represents the cumulative, static $V_{CE(sat)}$ voltage saturation drop across both active NPN junctions to ground.
+    \item \textbf{Pull-Up Network ($R_1$):} $1\text{k}\Omega$ -- Specially selected to establish an efficient trade-off boundary between static power dissipation and output fan-out drive capabilities.
+    \item \textbf{Base Current Limiters ($R_2, R_3$):} $10\text{k}\Omega$ -- Sized to force deep base saturation when a $5\text{V}$ high logic assertion occurs, safeguarding the base-emitter junctions and preserving lifecycle characteristics under transient operations.
+\end{itemize}
+
+\subsection{Mathematical Verification \& Truth Table}
+The physical Boolean transfer matrix of the system yields the following operational bounds:
+\begin{equation}
+    V_{OUT} = \overline{A \cdot B}
+\end{equation}
+
+\begin{table}[!h]
+\centering
+\caption{NAND Gate Logical and Electrical Truth Table}
+\vspace{2mm}
+\begin{tabular}{cccc}
+\toprule
+\textbf{Input A} & \textbf{Input B} & \textbf{Output} & \textbf{Electrical Network Behavior} \\
+\midrule
+0 & 0 & \textbf{1} & Pull-up network conducting directly to $V_{CC} $ \\
+0 & 1 & \textbf{1} & Series totem-pole operating as an open circuit \\
+1 & 0 & \textbf{1} & Series totem-pole operating as an open circuit \\
+1 & 1 & \textbf{0} & Full BJT Saturation ($V_{CE(sat)} \approx 0\text{V}$ return path) \\
+\bottomrule
+\end{tabular}
+\label{tab:truth_table}
+\end{table}
+
+\section{SPICE Transient Simulation Configuration}
+To verify active transmission propagation delays and steady-state switching thresholds, the underlying workspace uses asynchronous pulse generators to cycle through all combinatorial net conditions and permutation states of the truth table.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Sources.png}
+    \caption{Sources V2 and V3.}
+    \label{fig:placeholder}
+\end{figure}
+
+\subsection{Stimulus Specifications (\texttt{VPULSE})}
+The testbench decouples input frequencies using sub-harmonic parameters to isolate edge transitions:
+
+\begin{table}[h]
+\centering
+\caption{Decoupled Transient Testbench Stimulus Vectors}
+\vspace{2mm}
+\begin{tabular}{ccccccc}
+\toprule
+\textbf{Source ID} & \textbf{Target Net} & \textbf{$V_{1}$ (Low)} & \textbf{$V_{2}$ (High)} & \textbf{Width ($T_w$)} & \textbf{Period ($T_{per}$)} & \textbf{Duty Cycle} \\
+\midrule
+\textbf{V2} & \texttt{/a} & $0\text{V}$ & $5\text{V}$ & $1\text{ms}$ & $2\text{ms}$ & 50\% \\
+\textbf{V3} & \texttt{/b} & $0\text{V}$ & $5\text{V}$ & $2\text{ms}$ & $4\text{ms}$ & 50\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{waveform_a.png} 
+    \caption{Transient Response Waveforms for A Assertions.}
+    \label{fig:waveforms_a}
+\end{figure}
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{waveform_b.png} 
+    \caption{Transient Response Waveforms for B Assertions.}
+    \label{fig:waveforms_b}
+\end{figure}
+
+\subsection{Simulation Execution Parameters}
+The simulation engine tracks these domains under a strict transient time-domain sweep bound to a calculation step size and an execution limit cap to ensure zero calculation aliasing:
+\begin{itemize}
+    \item \textbf{Analysis Type:} \texttt{Transient} (Time-domain sweep)
+    \item \textbf{Time Step:} \texttt{1u} ($1\,\mu\text{s}$ sampling resolution window)
+    \item \textbf{Final Time:} \texttt{4m} ($4\,\text{ms}$ execution limit tracking one full overlapping phase)
+\end{itemize}
+
+\subsection{Execution Instructions}
+\begin{enumerate}
+    \item Launch \texttt{NAND-Gate.kicad\_sch} within KiCad.
+    \item Navigate to \textbf{Inspect} $\rightarrow$ \textbf{Simulator...}
+    \item Select the pre-configured \textbf{Transient Analysis Tab} and click the \textbf{Run (Play)} button.
+    \item Assert the voltage probe tool onto nodes \texttt{A}, \texttt{B}, and \texttt{Output} to monitor the synchronized waveforms.
+\end{enumerate}
+
+\subsection{Simulation Engine Output Log}
+The operating point vector log, matrix solution parameters, and execution metadata produced by the native \texttt{ngspice} engine report the following initial steady-state conditions:
+
+\begin{verbatim}
+Note: Codel model file loading path is …/NAND-Gate/
+Note: No compatibility mode selected!
+Circuit: KiCad schematic
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+Using SPARSE 1.3 as Direct Linear Solver
+Initial Transient Solution
+--------------------------
+Node                                   Voltage
+----                                   -------
+/vcc                                         5
+/a                                           0
+/b                                           0
+/output                                      5
+ Reference value :  0.00000e+00
+
+No. of Data Rows : 503
+\end{verbatim}
+
+\section{Repository Integration \& Live Verification}
+The raw schematic netlist, CAD packages, and live test benches are actively tracked in our version control framework. To inspect the interactive layout or contribute to subsequent microarchitecture expansion logs, clone the master directory directly from our repository pipeline:
+
+\begin{center}
+    \href{https://github.com/esgosar/4-bit-computer-from-scratch-with-transistors}{\textbf{Open Source Hardware Repository Link}}
+\end{center}
+
+All functional issues regarding model convergence errors or physical hardware layout changes must be flagged directly inside the system tracking architecture.
+
+\end{document}
